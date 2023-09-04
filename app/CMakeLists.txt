@@ -2,12 +2,19 @@
 cmake_minimum_required(VERSION 3.20)
 project(wave LANGUAGES C)
 
+set(THREADS_PTHREAD_ARG "-pthread")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 # Include the libusb
 set(libusb usb-1.0)
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(libs/libusb)
+
+# Include the libhackrf
+set(libhackrf hackrf-static)
+set(LIBUSB_LIBRARIES ${libusb})
+set(LIBUSB_INCLUDE_DIR libs/libusb)
+add_subdirectory(libs/libhackrf)
 
 # Include the libfftw3 in single precision mode (libfftw3f)
 set(libfftw3 fftw3f)
