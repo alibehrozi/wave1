@@ -9,6 +9,15 @@ set(libusb usb-1.0)
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(libs/libusb)
 
+# Include the libfftw3 in single precision mode (libfftw3f)
+set(libfftw3 fftw3f)
+
+set(BUILD_TESTS OFF)
+set(ENABLE_FLOAT ON)
+set(ENABLE_THREADS ON)
+set(DISABLE_FORTRAN ON)
+add_subdirectory(libs/libfftw3)
+
 set(libwave wave)
 add_library(${libwave} SHARED
         ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/test.c)
