@@ -22,28 +22,29 @@
 #
 # Based heavily upon the libftdi cmake setup.
 
+if(BUILD_SHARED_LIBS)
+    set(LIBHACKRF_BUILD_SHARED_LIBS_DEFAULT ON)
+else()
+    set(LIBHACKRF_BUILD_SHARED_LIBS_DEFAULT OFF)
+endif()
+
+option(LIBHACKRF_BUILD_SHARED_LIBS_DEFAULT "Build Shared Libraries for libusb" ${LIBHACKRF_BUILD_SHARED_LIBS_DEFAULT})
+
 # Targets
 set(c_sources ${CMAKE_CURRENT_SOURCE_DIR}/hackrf.c CACHE INTERNAL "List of C sources")
 set(c_headers ${CMAKE_CURRENT_SOURCE_DIR}/hackrf.h CACHE INTERNAL "List of C headers")
 
-# Dynamic library
-add_library(hackrf SHARED ${c_sources})
-set_target_properties(hackrf PROPERTIES VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.0 SOVERSION 0)
-
-# Static library
-add_library(hackrf-static STATIC ${c_sources})
-if(MSVC)
-	set_target_properties(hackrf-static PROPERTIES OUTPUT_NAME "hackrf_static")
+if(LIBHACKRF_BUILD_SHARED_LIBS_DEFAULT)
+    add_library(hackrf SHARED ${c_sources})
+    set_target_properties(hackrf PROPERTIES VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.0 SOVERSION 0)
 else()
-	set_target_properties(hackrf-static PROPERTIES OUTPUT_NAME "hackrf")
+    add_library(hackrf STATIC ${c_sources})
 endif()
 
 set_target_properties(hackrf PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-set_target_properties(hackrf-static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
 # Dependencies
 target_link_libraries(hackrf ${LIBUSB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(hackrf-static ${LIBUSB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 # For cygwin just force UNIX OFF and WIN32 ON
 if( ${CYGWIN} )
@@ -52,14 +53,17 @@ if( ${CYGWIN} )
 endif( ${CYGWIN} )
 
 if( ${UNIX} )
-   install(TARGETS hackrf
-           LIBRARY DESTINATION lib${LIB_SUFFIX}
-           COMPONENT sharedlibs
-           )
-   install(TARGETS hackrf-static
-           ARCHIVE DESTINATION lib${LIB_SUFFIX}
-           COMPONENT staticlibs
-           )
+    if(LIBHACKRF_BUILD_SHARED_LIBS_DEFAULT)
+       install(TARGETS hackrf
+               LIBRARY DESTINATION lib${LIB_SUFFIX}
+               COMPONENT sharedlibs
+               )
+   else()
+       install(TARGETS hackrf
+               ARCHIVE DESTINATION lib${LIB_SUFFIX}
+               COMPONENT staticlibs
+               )
+   endif()
    install(FILES ${c_headers}
            DESTINATION include/${PROJECT_NAME}
            COMPONENT headers
@@ -67,14 +71,17 @@ if( ${UNIX} )
 endif( ${UNIX} )
 
 if( ${WIN32} )
-   install(TARGETS hackrf
-           DESTINATION bin
-           COMPONENT sharedlibs
-           )
-   install(TARGETS hackrf-static
-           DESTINATION bin
-           COMPONENT staticlibs
-           )
+    if(LIBHACKRF_BUILD_SHARED_LIBS_DEFAULT)
+       install(TARGETS hackrf
+               DESTINATION bin
+               COMPONENT sharedlibs
+               )
+   else()
+       install(TARGETS hackrf
+               DESTINATION bin
+               COMPONENT staticlibs
+               )
+   endif()
    install(FILES ${c_headers}
            DESTINATION include/${PROJECT_NAME}
            COMPONENT headers

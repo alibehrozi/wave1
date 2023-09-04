@@ -11,7 +11,7 @@ set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(libs/libusb)
 
 # Include the libhackrf
-set(libhackrf hackrf-static)
+set(libhackrf hackrf)
 set(LIBUSB_LIBRARIES ${libusb})
 set(LIBUSB_INCLUDE_DIR libs/libusb)
 add_subdirectory(libs/libhackrf)
