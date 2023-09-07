@@ -27,9 +27,14 @@ add_subdirectory(libs/libfftw3)
 
 set(libwave wave)
 add_library(${libwave} SHARED
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/test.c)
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/hackrf_wrapper.c)
+
+target_include_directories(${libwave} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/libhackrf/src)
 
 # Include libraries
 target_link_libraries(
         ${libwave}
+        ${libhackrf}
         log)
