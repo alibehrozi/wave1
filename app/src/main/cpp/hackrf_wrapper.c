@@ -23,7 +23,30 @@ static jclass callbackClass;
 static jobject callbackObject;
 static jmethodID callbackMethod;
 
+static jlong frequency = -1;
+static jlong sampleRate = -1;
+
+static jint lnaGain = -1;
+static jint vgaGain = -1;
+static jint txVgaGain = -1;
+
+static jboolean isOpen = 0;
+static jboolean isAmpEnable = 0;
+static jboolean isAntennaEnable = 0;
+
+typedef enum {
+    HACKRF_TRANSCEIVER_MODE_OFF = 0,
+    HACKRF_TRANSCEIVER_MODE_RECEIVE = 1,
+    HACKRF_TRANSCEIVER_MODE_TRANSMIT = 2,
+    HACKRF_TRANSCEIVER_MODE_SS = 3,
+    TRANSCEIVER_MODE_CPLD_UPDATE = 4,
+    TRANSCEIVER_MODE_RX_SWEEP = 5,
+} hackrf_transceiver_mode;
+
+static hackrf_transceiver_mode transceiverMode = HACKRF_TRANSCEIVER_MODE_OFF;
+
 int open_device(int file_descriptor);
+
 int rx_callback_t(hackrf_transfer *);
 
 extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_open
@@ -39,7 +62,13 @@ extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_open
         LOGE("hackrf_open() failed: %s (%d)\n",
              hackrf_error_name(result), result);
     }
+    isOpen = JNI_TRUE;
     return result;
+}
+
+extern JNIEXPORT jboolean JNICALL Java_com_github_alibehrozi_wave_Hackrf_isOpen
+        (JNIEnv *env, jclass clazz) {
+    return isOpen;
 }
 
 extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_close
@@ -54,6 +83,7 @@ extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_close
         LOGE("hackrf_close() failed: %s (%d)\n",
              hackrf_error_name(result), result);
     }
+    isOpen = JNI_FALSE;
     return result;
 }
 
@@ -87,6 +117,7 @@ extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_startRx
     }
 
     LOGE("hackrf_start_rx() done\n");
+    transceiverMode = HACKRF_TRANSCEIVER_MODE_RECEIVE;
     return result;
 }
 
@@ -99,6 +130,7 @@ extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_stopRx
     } else {
         LOGE("hackrf_stop_rx() done\n");
     }
+    transceiverMode = HACKRF_TRANSCEIVER_MODE_OFF;
     return result;
 }
 
@@ -111,19 +143,27 @@ extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_startTx
     } else {
         LOGE("hackrf_stop_rx() done\n");
     }
+    transceiverMode = HACKRF_TRANSCEIVER_MODE_TRANSMIT;
     return result;
 }
 
 extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_stopTx
         (JNIEnv *env, jclass class) {
     // TODO : implement stopTx()
+    transceiverMode = HACKRF_TRANSCEIVER_MODE_OFF;
     return EXIT_FAILURE;
 }
 
 extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_startRxSweep
-(JNIEnv *env, jclass clazz, jobject callback) {
+        (JNIEnv *env, jclass clazz, jobject callback) {
     // TODO: implement startRxSweep()
+    transceiverMode = TRANSCEIVER_MODE_RX_SWEEP;
     return EXIT_FAILURE;
+}
+
+extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_getTransceiverMode
+        (JNIEnv *env, jclass clazz) {
+    return transceiverMode;
 }
 
 extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_setFrequency
@@ -137,19 +177,30 @@ extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_setFrequenc
         LOGE("hackrf_set_freq() failed: %s (%d)\n",
              hackrf_error_name(result), result);
     }
-
+    frequency = freq_hz;
     return result;
 }
 
+extern JNIEXPORT jlong JNICALL Java_com_github_alibehrozi_wave_Hackrf_getFrequency
+        (JNIEnv *env, jclass clazz) {
+    return frequency;
+}
+
 extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_setSampleRate
-        (JNIEnv *env, jclass class, jlong freq_hz) {
-    int result = hackrf_set_sample_rate_manual(device, freq_hz, 1);
+        (JNIEnv *env, jclass class, jlong sampleRate_hz) {
+    int result = hackrf_set_sample_rate_manual(device, sampleRate_hz, 1);
     if (result != HACKRF_SUCCESS) {
         LOGE("hackrf_sample_rate_set() failed: %s (%d)\n",
              hackrf_error_name(result), result);
     }
 
+    sampleRate = sampleRate_hz;
     return result;
+}
+
+extern JNIEXPORT jlong JNICALL Java_com_github_alibehrozi_wave_Hackrf_getSampleRate
+        (JNIEnv *env, jclass clazz) {
+    return sampleRate;
 }
 
 extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_setLNAGain
@@ -160,7 +211,13 @@ extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_setLNAGain
              hackrf_error_name(result), result);
     }
 
+    lnaGain = gain;
     return result;
+}
+
+extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_getLNAGain
+        (JNIEnv *env, jclass clazz) {
+    return lnaGain;
 }
 
 extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_setVGAGain
@@ -171,7 +228,13 @@ extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_setVGAGain
              hackrf_error_name(result), result);
     }
 
+    vgaGain = gain;
     return result;
+}
+
+extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_getVGAGain
+        (JNIEnv *env, jclass clazz) {
+    return vgaGain;
 }
 
 extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_setTxVGAGain
@@ -182,7 +245,13 @@ extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_setTxVGAGai
              hackrf_error_name(result), result);
     }
 
+    txVgaGain = gain;
     return result;
+}
+
+extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_getTxVGAGain
+        (JNIEnv *env, jclass clazz) {
+    return txVgaGain;
 }
 
 extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_setAmpEnable
@@ -193,7 +262,13 @@ extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_setAmpEnabl
              hackrf_error_name(result), result);
     }
 
+    isAmpEnable = enable;
     return result;
+}
+
+extern JNIEXPORT jboolean JNICALL Java_com_github_alibehrozi_wave_Hackrf_isAmpEnable
+        (JNIEnv *env, jclass clazz) {
+    return isAmpEnable;
 }
 
 extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_setAntennaEnable
@@ -204,7 +279,13 @@ extern JNIEXPORT jint JNICALL Java_com_github_alibehrozi_wave_Hackrf_setAntennaE
              hackrf_error_name(result), result);
     }
 
+    isAntennaEnable = enable;
     return result;
+}
+
+extern JNIEXPORT jboolean JNICALL Java_com_github_alibehrozi_wave_Hackrf_isAntennaEnable
+        (JNIEnv *env, jclass clazz) {
+    return isAntennaEnable;
 }
 
 int open_device(int file_descriptor) {

@@ -13,6 +13,13 @@ public class Hackrf {
     public static native int open(int fileDescriptor);
 
     /**
+     * Gets hackrf state Open(true) / Close (false)
+     *
+     * @return The status of the hackRF
+     */
+    public static native boolean isOpen();
+
+    /**
      * Close a previously opened device
      *
      * @return @ref HACKRF_SUCCESS on success or variant of @ref hackrf_error
@@ -89,6 +96,14 @@ public class Hackrf {
      */
     public static native int stopTx();
 
+
+    /**
+     * Gets current mode of the HackRF device.
+     *
+     * @return different modes of the HackRF device. see @{@link transceiver_mode}
+     */
+    public static native int getTransceiverMode();
+
     /**
      * Sets the frequency of the HackRF device.
      *
@@ -98,12 +113,26 @@ public class Hackrf {
     public static native int setFrequency(long frequency);
 
     /**
+     * Gets the frequency of the HackRF device.
+     *
+     * @return Frequency in Hz.
+     */
+    public static native long getFrequency();
+
+    /**
      * Sets the sample rate of the HackRF device.
      *
      * @param sampleRate The desired sample rate in Hz.
      * @return The status of the operation.
      */
     public static native int setSampleRate(long sampleRate);
+
+    /**
+     * Gets the sample rate of the HackRF device.
+     *
+     * @return Sample rate in Hz.
+     */
+    public static native long getSampleRate();
 
     /**
      * Set LNA gain
@@ -117,6 +146,13 @@ public class Hackrf {
     public static native int setLNAGain(int value);
 
     /**
+     * Gets the RF RX gain of the MAX2837 transceiver IC.
+     *
+     * @return RX IF gain value in dB
+     */
+    public static native int getLNAGain();
+
+    /**
      * Set baseband RX gain of the MAX2837 transceier IC ("BB" or "VGA" gain setting) in decibels.
      * Must be in range 0-62dB with 2dB steps.
      *
@@ -124,6 +160,13 @@ public class Hackrf {
      * @return @{@link hackrf_error#HACKRF_SUCCESS}  on success or @{@link hackrf_error} variant
      */
     public static native int setVGAGain(int value);
+
+    /**
+     * Gets baseband RX gain of the MAX2837 transceier IC.
+     *
+     * @return RX BB gain value in dB
+     */
+    public static native int getVGAGain();
 
     /**
      * Set RF TX gain of the MAX2837 transceiver IC ("IF" or "VGA" gain setting) in decibels.
@@ -135,14 +178,28 @@ public class Hackrf {
     public static native int setTxVGAGain(int value);
 
     /**
-     * Enable/disable 14dB RF amplifier
+     * Gets RF TX gain of the MAX2837 transceiver IC.
      *
+     * @return TX IF gain value in dB
+     */
+    public static native int getTxVGAGain();
+
+    /**
+     * Enable/disable 14dB RF amplifier
+     * <p>
      * Enable / disable the ~11dB RF RX/TX amplifiers U13/U25 via controlling switches U9 and U14.
      *
      * @param value enable (1) or disable (0) amplifier
      * @return @{@link hackrf_error#HACKRF_SUCCESS}  on success or @{@link hackrf_error} variant
      */
     public static native int setAmpEnable(boolean value);
+
+    /**
+     * Gets RF amplifier state.
+     *
+     * @return amplifier is enable (true) or disable (false)
+     */
+    public static native boolean isAmpEnable();
 
     /**
      * Enable / disable bias-tee (antenna port power)
@@ -158,6 +215,13 @@ public class Hackrf {
      * @return @{@link hackrf_error#HACKRF_SUCCESS} on success or @ref hackrf_error variant
      */
     public static native int setAntennaEnable(boolean enable);
+
+    /**
+     * Gets bias-tee (antenna port power) state.
+     *
+     * @return bias-tee enable (true) or disable (false)
+     */
+    public static native boolean isAntennaEnable();
 
     /**
      * Convert @ref hackrf_error into human-readable string
@@ -214,6 +278,45 @@ public class Hackrf {
 
             default:
                 return "unknown error code";
+        }
+    }
+
+    public enum transceiver_mode {
+        /**
+         * Transceiver is in Off mode (0)
+         */
+        HACKRF_TRANSCEIVER_MODE_OFF(0),
+        /**
+         * Transceiver is in Receive mode (1)
+         */
+        HACKRF_TRANSCEIVER_MODE_RECEIVE(1),
+        /**
+         * Transceiver is in Transmit mode (2)
+         */
+        HACKRF_TRANSCEIVER_MODE_TRANSMIT(2),
+        /**
+         * Transceiver is in Single Sideband (SS) mode (3)
+         */
+        HACKRF_TRANSCEIVER_MODE_SS(3),
+        /**
+         * Transceiver is in CPLD (Complex Programmable Logic Device) update mode (4)
+         */
+        TRANSCEIVER_MODE_CPLD_UPDATE(4),
+        /**
+         * Transceiver is in Receive Sweep mode (5)
+         */
+        TRANSCEIVER_MODE_RX_SWEEP(5);
+
+        // The integer value associated with each transceiver mode.
+        final int transceiverMode;
+
+        /**
+         * Constructor for transceiver_mode enum, sets the associated integer value.
+         *
+         * @param transceiverMode The integer value representing the transceiver mode.
+         */
+        transceiver_mode(int transceiverMode) {
+            this.transceiverMode = transceiverMode;
         }
     }
 
